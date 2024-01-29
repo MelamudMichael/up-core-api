@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.18.0)
+project(up-core-aoi VERSION "${VERSION_STRING}" LANGUAGES CXX)
+
+file(GLOB_RECURSE PROTOBUF_DEFINITION_FILES "${CMAKE_CURRENT_SOURCE_DIR}/uprotocol/*.proto")
+
+set(PROTOBUF_INPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/uprotocol")
+set(PROTOBUF_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/uprotocol")
+
+file(MAKE_DIRECTORY ${PROTOBUF_OUTPUT_DIRECTORY})
+
+foreach(file ${PROTOBUF_DEFINITION_FILES})
+    set(PROTOBUF_ARGUMENTS "-I=${PROTOBUF_INPUT_DIRECTORY}" "--cpp_out=${PROTOBUF_OUTPUT_DIRECTORY}" "${file}")
+
+    execute_process(
+        COMMAND protoc ${PROTOBUF_ARGUMENTS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        RESULT_VARIABLE PROTOBUF_RESULT
+        OUTPUT_VARIABLE PROTOBUF_OUTPUT_VARIABLE)
+
+endforeach()
+
+message("${CMAKE_CURRENT_BINARY_DIR}")
+
+file(GLOB_RECURSE SRC_PROTO_CORE_API "${CMAKE_CURRENT_BINARY_DIR}/uprotocol/*.cc")
+
+file(GLOB_RECURSE HEADER_PROTO_CORE_API "${CMAKE_CURRENT_BINARY_DIR}/uprotocol/*.h")
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/uprotocol)
+
+add_library(up-core-api SHARED ${SRC_PROTO_CORE_API})
+
+target_include_directories(up-core-api PUBLIC ${HEADER_PROTO_CORE_API})
+
+#set_target_properties(hello PROPERTIES PUBLIC_HEADER "include/hello.h")
+install(TARGETS up-core-api)
+install(FILES ${HEADER_PROTO_CORE_API}
+    DESTINATION uprotocol)
